@@ -8,6 +8,44 @@ let connection;
 
 module.exports = {
     /**
+     * Get daily reward
+     * @param {string} userID - ID of the User
+     * @param {string} guildID - ID of the Guild
+     * @param {number} amount - Amount of daily reward
+     * @returns {Object} - Reward details
+     */
+    async daily(userID, guildID, amount) {
+        if (!userID) throw new TypeError("Please provide a User ID");
+        if (!guildID) throw new TypeError("Please provide a Guild ID");
+        if (isNaN(amount) || amount < 0) throw new TypeError("Amount should be a positive number");
+
+        const user = await Economy.findOne({ userID, guildID });
+        if (!user) {
+            const newUser = new Economy({ userID, guildID, daily: Date.now() });
+            await newUser.save();
+            return { amount: 0 };
+        }
+
+        const now = Date.now();
+        const timeSinceLastDaily = now - user.daily;
+
+        if (dailycd - timeSinceLastDaily > 0) {
+            const millisec = dailycd - timeSinceLastDaily;
+            const seconds = Math.floor(millisec / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const hours = Math.floor(minutes / 60);
+
+            const cdL = `${hours ? `${hours} Hour(s), ` : ''}${minutes % 60} Minute(s), ${seconds % 60} Second(s).`;
+            return { cd: true, cdL, seconds, minutes, hours };
+        }
+
+        user.daily = now;
+        user.wallet += parseInt(amount, 10);
+        await user.save();
+        return { amount };
+    },
+
+    /**
      * Connect to MongoDB
      * @param {string} uri - Mongo Connection URI
      */
@@ -224,39 +262,4 @@ module.exports = {
         await user.save();
         return { amount };
     },
-
-    /**
-     * Get daily reward
-     * @param {string} userID - ID of the User
-     * @param {string} guildID - ID of the Guild
-     * @param {number} amount - Amount of daily reward
-     * @returns {Object} - Reward details
-     */
-    async daily(userID, guildID, amount) {
-        if (!userID) throw new TypeError("Please provide a User ID");
-        if (!guildID) throw new TypeError("Please provide a Guild ID");
-        if (isNaN(amount) || amount < 0) throw new TypeError("Amount should be a positive number");
-        const user = await Economy.findOne({ userID, guildID });
-        if (!user) {
-            const newUser = new Economy({ userID, guildID, daily: Date.now() });
-            await newUser.save();
-            return { amount: 0 };
-        }
-        const now = Date.now();
-        const timeSinceLastDaily = now - user.daily;
-        if (dailycd - timeSinceLastDaily > 0) {
-            const millisec = dailycd - timeSinceLastDaily;
-            const seconds = Math.floor(millisec / 1000);
-            const minutes = Math.floor(seconds / 60);
-            const hours = Math.floor(minutes / 60);
-
-            const cdL = `${hours ? `${hours} Hour(s), ` : ''}${minutes % 60} Minute(s), ${seconds % 60} Second(s).`;
-            return { cd: true, cdL, seconds, minutes, hours };
-        }
-        user.daily = now;
-        user.wallet += parseInt(amount, 10);
-        await user.save();
-        return { amount };
-    },
 };
-
