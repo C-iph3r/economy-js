@@ -15,8 +15,8 @@ module.exports = {
         if (!uri) throw new TypeError("Please provide a Mongoose URI");
         connection = uri;
         return mongoose.connect(uri, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true
+          //  useNewUrlParser: true,
+          //  useUnifiedTopology: true
         });
     },
 
