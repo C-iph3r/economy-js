@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
-const economy = require('./models/economy');
+const Economy = require('./models/economy');
 const dailycd = 8.64e+7;
 
-mongoose.set('useFindAndModify', false);
+mongoose.set('strictQuery', false);
 
 let connection;
 
@@ -15,8 +15,8 @@ module.exports = {
         if (!uri) throw new TypeError("Please provide a Mongoose URI");
         connection = uri;
         return mongoose.connect(uri, {
-          //  useNewUrlParser: true,
-          //  useUnifiedTopology: true
+            useNewUrlParser: true,
+            useUnifiedTopology: true
         });
     },
 
@@ -30,10 +30,10 @@ module.exports = {
         if (!userID) throw new TypeError("Please provide a User ID");
         if (!guildID) throw new TypeError("Please provide a Guild ID");
 
-        const user = await economy.findOne({ userID, guildID });
+        const user = await Economy.findOne({ userID, guildID });
         if (!user) {
-            const newUser = new economy({ userID, guildID });
-            await newUser.save().catch(console.error);
+            const newUser = new Economy({ userID, guildID });
+            await newUser.save();
             return { wallet: newUser.wallet, bankCapacity: newUser.bankCapacity, bank: newUser.bank };
         }
 
@@ -50,19 +50,17 @@ module.exports = {
     async give(userID, guildID, amount) {
         if (!userID) throw new TypeError("Please provide a User ID");
         if (!guildID) throw new TypeError("Please provide a Guild ID");
-        if (!amount) throw new TypeError("Please provide an amount");
-        if (isNaN(amount)) throw new TypeError("The amount should be a number");
-        if (amount < 0) throw new TypeError("Amount can't be less than zero");
+        if (isNaN(amount) || amount < 0) throw new TypeError("Amount should be a positive number");
 
-        const user = await economy.findOne({ userID, guildID });
+        const user = await Economy.findOne({ userID, guildID });
         if (!user) {
-            const newUser = new economy({ userID, guildID });
-            await newUser.save().catch(console.error);
+            const newUser = new Economy({ userID, guildID, wallet: amount });
+            await newUser.save();
             return { amount };
         }
 
         user.wallet += parseInt(amount, 10);
-        await user.save().catch(console.error);
+        await user.save();
         return { amount };
     },
 
@@ -76,27 +74,17 @@ module.exports = {
     async deduct(userID, guildID, amount) {
         if (!userID) throw new TypeError("Please provide a User ID");
         if (!guildID) throw new TypeError("Please provide a Guild ID");
-        if (!amount) throw new TypeError("Please provide an amount");
-        if (isNaN(amount)) throw new TypeError("The amount should be a number");
-        if (amount < 0) throw new TypeError("Amount can't be less than zero");
+        if (isNaN(amount) || amount < 0) throw new TypeError("Amount should be a positive number");
 
-        const user = await economy.findOne({ userID, guildID });
+        const user = await Economy.findOne({ userID, guildID });
         if (!user) {
-            const newUser = new economy({ userID, guildID });
-            await newUser.save().catch(console.error);
             return { amount: 0 };
         }
 
-        if (amount > user.wallet) {
-            const deductedAmount = user.wallet;
-            user.wallet = 0;
-            await user.save().catch(console.error);
-            return { amount: deductedAmount };
-        }
-
-        user.wallet -= parseInt(amount, 10);
-        await user.save().catch(console.error);
-        return { amount };
+        const deductedAmount = Math.min(user.wallet, amount);
+        user.wallet -= deductedAmount;
+        await user.save();
+        return { amount: deductedAmount };
     },
 
     /**
@@ -109,19 +97,17 @@ module.exports = {
     async giveCapacity(userID, guildID, capacity) {
         if (!userID) throw new TypeError("Please provide a User ID");
         if (!guildID) throw new TypeError("Please provide a Guild ID");
-        if (!capacity) throw new TypeError("Please provide an amount");
-        if (isNaN(capacity)) throw new TypeError("The amount should be a number");
-        if (capacity < 0) throw new TypeError("Can't give bank space less than zero");
+        if (isNaN(capacity) || capacity < 0) throw new TypeError("Capacity should be a positive number");
 
-        const user = await economy.findOne({ userID, guildID });
+        const user = await Economy.findOne({ userID, guildID });
         if (!user) {
-            const newUser = new economy({ userID, guildID, bankCapacity: 2500 + parseInt(capacity, 10) });
-            await newUser.save().catch(console.error);
+            const newUser = new Economy({ userID, guildID, bankCapacity: 2500 + parseInt(capacity, 10) });
+            await newUser.save();
             return { capacity };
         }
 
         user.bankCapacity += parseInt(capacity, 10);
-        await user.save().catch(console.error);
+        await user.save();
         return { capacity };
     },
 
@@ -135,11 +121,11 @@ module.exports = {
         if (!userID) throw new TypeError("Please provide a User ID");
         if (!guildID) throw new TypeError("Please provide a Guild ID");
 
-        const user = await economy.findOne({ userID, guildID });
+        const user = await Economy.findOne({ userID, guildID });
         if (user) return { exists: true };
 
-        const newUser = new economy({ userID, guildID, wallet: 0, bank: 0, bankCapacity: 2500 });
-        await newUser.save().catch(console.error);
+        const newUser = new Economy({ userID, guildID, wallet: 0, bank: 0, bankCapacity: 2500 });
+        await newUser.save();
         return { exists: false };
     },
 
@@ -153,10 +139,10 @@ module.exports = {
         if (!userID) throw new TypeError("Please provide a User ID");
         if (!guildID) throw new TypeError("Please provide a Guild ID");
 
-        const user = await economy.findOne({ userID, guildID });
+        const user = await Economy.findOne({ userID, guildID });
         if (!user) return { exists: false };
 
-        await user.remove().catch(console.error);
+        await user.remove();
         return { exists: true };
     },
 
@@ -168,64 +154,28 @@ module.exports = {
      */
     async lb(guildID, count) {
         if (!guildID) throw new TypeError("Please provide a Guild ID");
-        if (!count) throw new TypeError("You didn't provide the number of users");
-        if (isNaN(count)) throw new TypeError("The number of users must be a number");
+        if (isNaN(count)) throw new TypeError("Count should be a number");
 
-        const users = await economy.find({ guildID }).sort([['wallet', 'descending']]).exec();
-        return users.slice(0, count);
-    },
-
-    /**
-     * Get daily reward
-     * @param {string} userID - ID of the User
-     * @param {string} guildID - ID of the Guild
-     * @param {number} amount - Amount of daily reward
-     * @returns {Object} - Reward details
-     */
-    async daily(userID, guildID, amount) {
-        if (!userID) throw new TypeError("Please provide a User ID");
-        if (!guildID) throw new TypeError("Please provide a Guild ID");
-        if (!amount) throw new TypeError("Please provide an amount");
-
-        const user = await economy.findOne({ userID, guildID });
-        if (!user) {
-            const newUser = new economy({ userID, guildID });
-            await newUser.save().catch(console.error);
-            return { amount: 0 };
-        }
-
-        if (dailycd - (Date.now() - user.daily) > 0) {
-            const millisec = dailycd - (Date.now() - user.daily);
-            const seconds = Math.floor(millisec / 1000);
-            const minutes = Math.floor(seconds / 60);
-            const hours = Math.floor(minutes / 60);
-
-            const cdL = `${hours ? `${hours} Hour(s), ` : ''}${minutes % 60} Minute(s), ${seconds % 60} Seconds.`;
-            return { cd: true, cdL, seconds, minutes, hours };
-        }
-
-        user.daily = Date.now();
-        user.wallet += parseInt(amount, 10);
-        await user.save().catch(console.error);
-        return { amount };
+        const leaderboard = await Economy.find({ guildID }).sort({ wallet: -1 }).limit(parseInt(count, 10));
+        return leaderboard;
     },
 
     /**
      * Deposit coins into the bank
      * @param {string} userID - ID of the User
      * @param {string} guildID - ID of the Guild
-     * @param {number} amount - Amount to deposit
+     * @param {number} amount - Amount of coins
      * @returns {Object} - Deposit status
      */
     async deposit(userID, guildID, amount) {
         if (!userID) throw new TypeError("Please provide a User ID");
         if (!guildID) throw new TypeError("Please provide a Guild ID");
-        if (amount < 0) throw new TypeError("Deposit amount cannot be less than zero");
+        if (isNaN(amount) || amount < 0) throw new TypeError("Deposit amount should be a positive number");
 
-        const user = await economy.findOne({ userID, guildID });
+        const user = await Economy.findOne({ userID, guildID });
         if (!user) {
-            const newUser = new economy({ userID, guildID, wallet: amount, bank: 0, bankCapacity: 2500 });
-            await newUser.save().catch(console.error);
+            const newUser = new Economy({ userID, guildID, wallet: amount, bank: 0, bankCapacity: 2500 });
+            await newUser.save();
             return { noten: false, amount };
         }
 
@@ -235,7 +185,7 @@ module.exports = {
 
         user.wallet -= amount;
         user.bank += amount;
-        await user.save().catch(console.error);
+        await user.save();
         return { noten: false, amount };
     },
 
@@ -250,7 +200,7 @@ module.exports = {
         if (!userID) throw new TypeError("Please provide a User ID");
         if (!guildID) throw new TypeError("Please provide a Guild ID");
 
-        const user = await economy.findOne({ userID, guildID });
+        const user = await Economy.findOne({ userID, guildID });
         if (!user) {
             return { noten: true };
         }
@@ -271,7 +221,7 @@ module.exports = {
 
         user.wallet += amount;
         user.bank -= amount;
-        await user.save().catch(console.error);
+        await user.save();
         return { amount };
     },
 };
