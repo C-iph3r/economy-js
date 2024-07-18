@@ -224,4 +224,40 @@ module.exports = {
         await user.save();
         return { amount };
     },
+
+       /**
+     * Get daily reward
+     * @param {string} userID - ID of the User
+     * @param {string} guildID - ID of the Guild
+     * @param {number} amount - Amount of daily reward
+     * @returns {Object} - Reward details
+     */
+    async daily(userID, guildID, amount) {
+        if (!userID) throw new TypeError("Please provide a User ID");
+        if (!guildID) throw new TypeError("Please provide a Guild ID");
+        if (!amount) throw new TypeError("Please provide an amount");
+
+        const user = await Economy.findOne({ userID, guildID });
+        if (!user) {
+            const newUser = new Economy({ userID, guildID });
+            await newUser.save().catch(console.error);
+            return { amount: 0 };
+        }
+
+        if (dailycd - (Date.now() - user.daily) > 0) {
+            const millisec = dailycd - (Date.now() - user.daily);
+            const seconds = Math.floor(millisec / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const hours = Math.floor(minutes / 60);
+
+            const cdL = `${hours ? `${hours} Hour(s), ` : ''}${minutes % 60} Minute(s), ${seconds % 60} Seconds.`;
+            return { cd: true, cdL, seconds, minutes, hours };
+        }
+
+        user.daily = Date.now();
+        user.wallet += parseInt(amount, 10);
+        await user.save().catch(console.error);
+        return { amount };
+    },
 };
+
