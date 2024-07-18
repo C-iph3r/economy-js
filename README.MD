@@ -1,4 +1,4 @@
-## NOTE THIS IS AN UPDATED VERSION OF THE NPM PACKAGE discord-mongoose-economy YOU CAN FIND THE ORIGINAL HERE 
+## NOTE THIS IS AN UPDATED VERSION OF THE NPM PACKAGE discord-mongoose-economy YOU CAN FIND THE ORIGINAL HERE:
 ## Installation
 ## via npm
 ```bash 
@@ -14,14 +14,14 @@ bun add github:C-iph3r/economy-js
 ```
 ## Connect to MongoDB
 ```javascript
-const eco = require('discord-mongoose-economy');
+const eco = require('economy-js');
 
 eco.connect('mongodb://localhost/database'); //MongoDB Connection String(You also need to specify database)
 ```
 
 ## Balance Command
 ```javascript
-const eco = require('discord-mongoose-economy');
+const eco = require('economy-js');
 
 if(msg === "balance"){
 const balance = await eco.balance(message.author.id, message.guild.id); //Returns wallet, bank, and bankCapacity. Also creates a USer if it doesn't exist.
@@ -30,7 +30,7 @@ message.channel.send(`Wallet: ${balance.wallet}\nBank: ${balance.bank}/${balance
 ```
 ## Give User Random Balance/Message
 ```javascript
-const eco = require('discord-mongoose-economy');
+const eco = require('economy-js');
 const min = 10; //Minimum of 10
 const max = 100; //Maximum of 100
 const random = Math.floor(Math.random() * (max - min + 1) ) + min; //Number Generator, no need to touch as we already have min, max constant above.
@@ -43,7 +43,7 @@ await eco.give(message.author.id, message.guild.id, random); // Make Sure this C
 ## Give Balance To User
 ```javascript
 //When you're using this Library, I assume you already know how to handle Arguments.
-const eco = require('discord-mongoose-economy');
+const eco = require('economy-js');
 
 if(msg === "give"){ //give @shuncey 1000
     if(!message.mentions.users.first()) return message.reply(`please mention a user.`);
@@ -54,7 +54,7 @@ if(msg === "give"){ //give @shuncey 1000
 ```
 ## Deduct User Balance
 ```javascript
-const eco = require('discord-mongoose-economy');
+const eco = require('economy-js');
 
 if(msg === "deduct"){ //deduct @shuncey 1000
     if(!message.mentions.users.first()) return message.reply(`please mention a user.`);
@@ -65,7 +65,7 @@ if(msg === "deduct"){ //deduct @shuncey 1000
 ```
 ## Give User More Bank Capacity
 ```javascript
-const eco = require('discord-mongoose-economy');
+const eco = require('economy-js');
 
 if(msg === "givebankcap"){
     if(!message.mentions.users.first()) return message.reply(`please mention a user.`);
@@ -75,7 +75,7 @@ if(msg === "givebankcap"){
 ```
 ## Create User
 ```javascript
-const eco = require('discord-mongoose-economy');
+const eco = require('economy-js');
 
 if(msg === "create"){
     if(!message.mentions.users.first()) return message.reply(`Please mention a user.`);
@@ -86,7 +86,7 @@ if(msg === "create"){
 ```
 ## Delete User
 ```javascript
-const eco = require('discord-mongoose-economy');
+const eco = require('economy-js');
 
 if(msg === "delete"){
     if(!message.mentions.users.first()) return message.reply(`Please mention a user.`);
@@ -97,7 +97,7 @@ if(msg === "delete"){
 ```
 ## Create Leaderboard
 ```javascript
-const eco = require('discord-mongoose-economy');
+const eco = require('economy-js');
 
 if(msg === "leaderboard"){
         const lb = await eco.lb(message.guild.id, 10); //(guildID, limit)
@@ -113,7 +113,7 @@ if(msg === "leaderboard"){
 ```
 ## Daily Command
 ```javascript 
-const eco = const eco = require('discord-mongoose-economy');
+const eco = const eco = require('economy-js');
 
 if(msg === "daily"){
     const daily  = await eco.daily(message.author.id, message.guild.id, 500); //give 500 for daily, can be changed
@@ -123,7 +123,7 @@ if(msg === "daily"){
 ```
 ## Deposit and Withdraw
 ```javascript
-const eco = require('discord-mongoose-economy');
+const eco = require('economy-js');
 
 if(msg === "deposit"){
     if(args[1] !== "all" && isNaN(args[1])) return message.reply('not valid'); //deposit only accepts integers or string "all" which deposits all from the users wallet.
