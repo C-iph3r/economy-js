@@ -1,6 +1,16 @@
+## NOTE THIS IS AN UPDATED VERSION OF THE NPM PACKAGE discord-mongoose-economy YOU CAN FIND THE ORIGINAL HERE 
 ## Installation
+## via npm
+```bash 
+npm install github:C-iph3r/economy-js
+```
+## via yarn
 ```bash
-npm i discord-mongoose-economy
+yarn add github:C-iph3r/economy-js
+```
+## via bun
+```bash
+bun add github:C-iph3r/economy-js
 ```
 ## Connect to MongoDB
 ```javascript
