@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const Economy = require('./models/economy');
-const dailycd = 8.64e+7;
+const dailycd = 8.64e+7; // 24 hours in milliseconds
 
 mongoose.set('strictQuery', false);
 
@@ -15,8 +15,8 @@ module.exports = {
         if (!uri) throw new TypeError("Please provide a Mongoose URI");
         connection = uri;
         return mongoose.connect(uri, {
-           // useNewUrlParser: true,
-           // useUnifiedTopology: true
+           useNewUrlParser: true,
+           useUnifiedTopology: true
         });
     },
 
@@ -174,9 +174,9 @@ module.exports = {
 
         const user = await Economy.findOne({ userID, guildID });
         if (!user) {
-            const newUser = new Economy({ userID, guildID, wallet: amount, bank: 0, bankCapacity: 2500 });
+            const newUser = new Economy({ userID, guildID, wallet: 0, bank: amount, bankCapacity: 2500 });
             await newUser.save();
-            return { noten: false, amount };
+            return { amount };
         }
 
         if (amount > user.wallet) {
@@ -225,7 +225,7 @@ module.exports = {
         return { amount };
     },
 
-       /**
+    /**
      * Get daily reward
      * @param {string} userID - ID of the User
      * @param {string} guildID - ID of the Guild
@@ -235,28 +235,27 @@ module.exports = {
     async daily(userID, guildID, amount) {
         if (!userID) throw new TypeError("Please provide a User ID");
         if (!guildID) throw new TypeError("Please provide a Guild ID");
-        if (!amount) throw new TypeError("Please provide an amount");
-
+        if (isNaN(amount) || amount < 0) throw new TypeError("Amount should be a positive number");
         const user = await Economy.findOne({ userID, guildID });
         if (!user) {
-            const newUser = new Economy({ userID, guildID });
-            await newUser.save().catch(console.error);
+            const newUser = new Economy({ userID, guildID, daily: Date.now() });
+            await newUser.save();
             return { amount: 0 };
         }
-
-        if (dailycd - (Date.now() - user.daily) > 0) {
-            const millisec = dailycd - (Date.now() - user.daily);
+        const now = Date.now();
+        const timeSinceLastDaily = now - user.daily;
+        if (dailycd - timeSinceLastDaily > 0) {
+            const millisec = dailycd - timeSinceLastDaily;
             const seconds = Math.floor(millisec / 1000);
             const minutes = Math.floor(seconds / 60);
             const hours = Math.floor(minutes / 60);
 
-            const cdL = `${hours ? `${hours} Hour(s), ` : ''}${minutes % 60} Minute(s), ${seconds % 60} Seconds.`;
+            const cdL = `${hours ? `${hours} Hour(s), ` : ''}${minutes % 60} Minute(s), ${seconds % 60} Second(s).`;
             return { cd: true, cdL, seconds, minutes, hours };
         }
-
-        user.daily = Date.now();
+        user.daily = now;
         user.wallet += parseInt(amount, 10);
-        await user.save().catch(console.error);
+        await user.save();
         return { amount };
     },
 };
