@@ -14,7 +14,7 @@ module.exports = {
      * @param {number} amount - Amount of daily reward
      * @returns {Object} - Reward details
      */
-    async daily(userID, guildID, amount) {
+async daily(userID, guildID, amount) {
         if (!userID) throw new TypeError("Please provide a User ID");
         if (!guildID) throw new TypeError("Please provide a Guild ID");
         if (isNaN(amount) || amount < 0) throw new TypeError("Amount should be a positive number");
@@ -28,7 +28,6 @@ module.exports = {
 
         const now = Date.now();
         const timeSinceLastDaily = now - user.daily;
-
         if (dailycd - timeSinceLastDaily > 0) {
             const millisec = dailycd - timeSinceLastDaily;
             const seconds = Math.floor(millisec / 1000);
